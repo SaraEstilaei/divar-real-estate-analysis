@@ -3,15 +3,18 @@
 An end-to-end data science and exploratory analysis of real estate listings from the Divar platform, covering data sanitation, feature engineering, hypothesis testing, spatial/market clustering, and machine learning pipeline preparation.
 
 ## Team
+
 - **Sara** — [Add task]
 - **Kiana** — [Add task]
 - **Ramtin** — [Add task]
 - **Amir Ali** — [Add task]
 
 ## Project Overview
+
 This repository contains a structured, reproducible data analysis workflow designed to uncover patterns in Tehran's housing market, examine price distributions across districts, and evaluate predictive features for real estate valuation.
 
 ## Project Structure
+
 ```text
 divar-housing-analysis/
 ├── data/
