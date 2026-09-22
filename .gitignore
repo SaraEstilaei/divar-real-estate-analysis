@@ -1,0 +1,31 @@
+# Python & Environment
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+.venv/
+.ipynb_checkpoints/
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Outputs
+outputs/figures/
+outputs/maps/
+outputs/reports/
+
+# Models
+models/*.pkl
+models/*.joblib
+models/*.pt
+models/*.pth
+
+# Processed Data & Splits
+data/processed/*.parquet
+data/splits/*.csv
+
+# Heavy Raw Data
+data/raw/Divar.csv
