@@ -29,3 +29,5 @@ data/splits/*.csv
 
 # Heavy Raw Data
 data/raw/Divar.csv
+
+data/processed/kiana_columns.csv 
