@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
 
 def add_rental_daily_pricing_ratios(df: pd.DataFrame) -> pd.DataFrame:
@@ -24,23 +25,23 @@ def add_rental_daily_pricing_ratios(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def to_binary_flag(series: pd.Series) -> pd.Series:
+    """Safely convert mixed values (bool, string, float, NaN) to 0 or 1."""
+    false_values = {False, 0, "0", "false", "False", "nan", "None"}
+    is_valid = series.notna()
+    is_not_false = ~series.isin(false_values)
+    return (is_valid & is_not_false).astype(int)
+
+
 def add_convertibility_flags(df: pd.DataFrame) -> pd.DataFrame:
     """Consolidate convertibility and tenant allowance attributes into binary flags."""
     df = df.copy()
 
     if "rent_credit_transform" in df.columns:
-        df["is_rent_credit_convertible"] = (
-            df["rent_credit_transform"].notna()
-            & (df["rent_credit_transform"] != False)
-            & (df["rent_credit_transform"] != 0)
-        ).astype(int)
+        df["is_rent_credit_convertible"] = to_binary_flag(df["rent_credit_transform"])
 
     if "rent_to_single" in df.columns:
-        df["allows_single_tenant"] = (
-            df["rent_to_single"].notna()
-            & (df["rent_to_single"] != False)
-            & (df["rent_to_single"] != 0)
-        ).astype(int)
+        df["allows_single_tenant"] = to_binary_flag(df["rent_to_single"])
 
     return df
 

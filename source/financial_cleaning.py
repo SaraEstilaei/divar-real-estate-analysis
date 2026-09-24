@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
 # ---------------------------------------------------------
 # Constants & Business Thresholds
@@ -38,10 +39,11 @@ def fix_mojibake(val):
 
 
 def clean_text_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Apply character encoding repairs across all object/string columns."""
+    """Apply character encoding repairs across all object/string columns safely and fast."""
     df = df.copy()
-    for col in df.select_dtypes(include="object").columns:
-        df[col] = df[col].apply(fix_mojibake)
+    text_cols = df.select_dtypes(include=["object", "string"]).columns
+    for col in text_cols:
+        df[col] = df[col].map(lambda x: fix_mojibake(x) if pd.notna(x) else x)
     return df
 
 
