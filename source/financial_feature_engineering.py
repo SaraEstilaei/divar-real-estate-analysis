@@ -1,33 +1,10 @@
 import numpy as np
 import pandas as pd
-
-
-def add_equivalent_financial_metrics(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Compute total financial equivalents using standard Iranian real estate formula:
-    1 Million Toman Rent ≈ 30 Million Toman Full Credit (Mortgage) equivalent.
-    """
-    df = df.copy()
-
-    if "credit_value" in df.columns and "rent_value" in df.columns:
-        credit = pd.to_numeric(df["credit_value"], errors="coerce").fillna(0)
-        rent = pd.to_numeric(df["rent_value"], errors="coerce").fillna(0)
-
-        # Total Equivalent Credit: Deposit + (Monthly Rent * 30)
-        # Only meaningful if at least one of credit or rent is positive
-        has_rental_data = (credit > 0) | (rent > 0)
-        equiv_credit = credit + (rent * 30.0)
-        df["equivalent_full_credit"] = equiv_credit.where(has_rental_data, np.nan)
-
-    return df
+from pathlib import Path
 
 
 def add_rental_daily_pricing_ratios(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Calculate price multipliers for temporary/daily rentals:
-    - Weekend price ratio vs regular days
-    - Special days / holiday price ratio vs regular days
-    """
+    """Calculate price ratios for temporary/daily rentals relative to regular days."""
     df = df.copy()
     base_col = "rent_price_on_regular_days"
 
@@ -48,27 +25,23 @@ def add_rental_daily_pricing_ratios(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def to_binary_flag(series: pd.Series) -> pd.Series:
+    """Safely convert mixed values (bool, string, float, NaN) to 0 or 1."""
+    false_values = {False, 0, "0", "false", "False", "nan", "None"}
+    is_valid = series.notna()
+    is_not_false = ~series.isin(false_values)
+    return (is_valid & is_not_false).astype(int)
+
+
 def add_convertibility_flags(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Consolidate convertibility columns into unified binary flags.
-    """
+    """Consolidate convertibility and tenant allowance attributes into binary flags."""
     df = df.copy()
 
-    # Convertibility between mortgage and rent
     if "rent_credit_transform" in df.columns:
-        df["is_rent_credit_convertible"] = (
-            df["rent_credit_transform"].notna()
-            & (df["rent_credit_transform"] != False)
-            & (df["rent_credit_transform"] != 0)
-        ).astype(int)
+        df["is_rent_credit_convertible"] = to_binary_flag(df["rent_credit_transform"])
 
-    # Boolean flag indicating bachelor/single tenant allowance
     if "rent_to_single" in df.columns:
-        df["allows_single_tenant"] = (
-            df["rent_to_single"].notna()
-            & (df["rent_to_single"] != False)
-            & (df["rent_to_single"] != 0)
-        ).astype(int)
+        df["allows_single_tenant"] = to_binary_flag(df["rent_to_single"])
 
     return df
 
@@ -80,14 +53,9 @@ def add_log_transforms(
         "credit_value",
         "rent_value",
         "equivalent_full_credit",
-        "rent_price_on_regular_days",
-        "rent_price_at_weekends",
-        "rent_price_on_special_days",
     ),
 ) -> pd.DataFrame:
-    """
-    Apply log1p transformation to monetary targets to reduce positive skewness.
-    """
+    """Apply log1p transformation to monetary targets to normalize right skewness."""
     df = df.copy()
     for col in target_cols:
         if col in df.columns:
@@ -97,16 +65,27 @@ def add_log_transforms(
     return df
 
 
+def drop_intermediate_feature_sources(df: pd.DataFrame) -> pd.DataFrame:
+    """Cleanup raw temporary attributes after feature extraction."""
+    cols_to_drop = [
+        "rent_price_on_regular_days",
+        "rent_price_at_weekends",
+        "rent_price_on_special_days",
+        "rent_to_single",
+        "rent_credit_transform",
+    ]
+    existing = [c for c in cols_to_drop if c in df.columns]
+    return df.drop(columns=existing)
+
+
 def feature_engineering_pipeline(
     df: pd.DataFrame, verbose: bool = True
 ) -> pd.DataFrame:
-    """
-    Sequential feature engineering execution on financial attributes.
-    """
-    df = add_equivalent_financial_metrics(df)
+    """Sequential feature engineering execution on financial attributes."""
     df = add_rental_daily_pricing_ratios(df)
     df = add_convertibility_flags(df)
     df = add_log_transforms(df)
+    df = drop_intermediate_feature_sources(df)
 
     if verbose:
         new_cols = [
@@ -120,6 +99,7 @@ def feature_engineering_pipeline(
                 "log_price_value",
                 "log_rent_value",
                 "log_credit_value",
+                "log_equivalent_full_credit",
             ]
             if c in df.columns
         ]

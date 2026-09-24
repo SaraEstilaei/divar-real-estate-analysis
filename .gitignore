@@ -5,6 +5,7 @@ __pycache__/
 venv/
 .env
 .venv/
+conda-env/
 .ipynb_checkpoints/
 
 # OS & IDE
@@ -12,21 +13,32 @@ venv/
 Thumbs.db
 .vscode/
 
+# All Data (Never commit data to Git)
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/splits/*
+!data/splits/.gitkeep
+
+# Catch-all for heavy dataset formats anywhere
+*.csv
+*.parquet
+*.feather
+*.h5
+*.xlsx
+*.zip
+*.tar.gz
+
 # Outputs
 outputs/figures/
 outputs/maps/
 outputs/reports/
 
 # Models
-models/*.pkl
-models/*.joblib
-models/*.pt
-models/*.pth
-
-# Processed Data & Splits
-data/processed/*.parquet
-data/splits/*.csv
-
-# Heavy Raw Data
-data/raw/Divar.csv
-data/splits/
+models/*
+!models/.gitkeep
+*.pkl
+*.joblib
+*.pt
+*.pth
